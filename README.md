@@ -180,7 +180,7 @@ NSBH:
 
 For BNS systems, the waveform is:
 
-    TaylorT4
+    TaylorF2
 
 For NSBH systems, the waveform is:
 
