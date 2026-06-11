@@ -1,3 +1,3 @@
 window.TDR_WEB_CONFIG = {
-  publicApiBase: "https://runs-motion-knowledgestorm-mel.trycloudflare.com",
+  publicApiBase: "https://farmers-moments-contrary-pasta.trycloudflare.com",
 };
