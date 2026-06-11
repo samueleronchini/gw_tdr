@@ -1,3 +1,3 @@
 window.TDR_WEB_CONFIG = {
-  publicApiBase: "https://prevent-frequently-complimentary-postcards.trycloudflare.com",
+  publicApiBase: "https://reflection-generating-faced-investors.trycloudflare.com",
 };
