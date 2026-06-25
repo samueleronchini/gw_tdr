@@ -272,55 +272,130 @@ def _validate_cached_hdf5(path):
     except Exception:
         return False
 
+def _acquire_file_lock(lock_path, stale_after=3600, poll_interval=0.2):
+    """
+    Acquire a simple inter-process lock using atomic file creation.
 
-def _ensure_cached_file(url, cache_dir):
+    This avoids multiple timebin workers downloading/writing the same GWOSC
+    cache file at the same time.
+    """
+    while True:
+        try:
+            fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            with os.fdopen(fd, "w") as f:
+                f.write(f"pid={os.getpid()}\ntime={time.time()}\n")
+            return
+
+        except FileExistsError:
+            try:
+                age = time.time() - os.path.getmtime(lock_path)
+                if age > stale_after:
+                    os.remove(lock_path)
+                    continue
+            except OSError:
+                pass
+
+            time.sleep(poll_interval)
+
+
+def _release_file_lock(lock_path):
+    try:
+        os.remove(lock_path)
+    except OSError:
+        pass
+
+ def _ensure_cached_file(url, cache_dir):
     os.makedirs(cache_dir, exist_ok=True)
 
     filename = url.split("/")[-1]
     path = os.path.join(cache_dir, filename)
-    tmp_path = path + ".part"
 
-    if os.path.exists(path):
-        if _validate_cached_hdf5(path):
-            print(f"Data {filename} already present in cache. Skipping download.", flush=True)
-            return path
-        os.remove(path)
+    # Lock per final cached file, so parallel timebins do not download/write
+    # the same GWOSC file at the same time.
+    lock_path = path + ".lock"
 
-    if os.path.exists(tmp_path):
-        os.remove(tmp_path)
+    # PID-specific temporary file avoids collisions between workers.
+    tmp_path = f"{path}.pid{os.getpid()}.part"
 
-    import shutil
-    cmd = []
-    print(f"Downloading {url} ... (this may take a while depending on your connection)", flush=True)
-    if shutil.which("wget"):
-        cmd = ["wget", "--tries=5", "--timeout=60", "--waitretry=10", "-O", tmp_path, url]
-    elif shutil.which("curl"):
-        # curl equivalents: --retry 5, --max-time 600, --retry-delay 10, -L (follow redirects), -o output
-        cmd = ["curl", "-L", "--progress-bar", "--retry", "5", "--retry-delay", "10", "--max-time", "600", "-o", tmp_path, url]
-    else:
-        raise GWOSCTransientError("Neither wget nor curl is installed on this system")
+    _acquire_file_lock(lock_path)
 
     try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError as exc:
+        if os.path.exists(path):
+            if _validate_cached_hdf5(path):
+                return path
+            os.remove(path)
+
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
-        raise GWOSCTransientError(f"Download failed for {url}: {exc}") from exc
 
-    if not os.path.exists(tmp_path):
-        raise GWOSCTransientError(f"Download did not create output file for {url}")
+        import shutil
 
-    os.replace(tmp_path, path)
+        print(
+            f"Downloading {url} ... (this may take a while depending on your connection)",
+            flush=True,
+        )
 
-    if not _validate_cached_hdf5(path):
+        if shutil.which("wget"):
+            cmd = [
+                "wget",
+                "--tries=5",
+                "--timeout=60",
+                "--waitretry=10",
+                "-O",
+                tmp_path,
+                url,
+            ]
+        elif shutil.which("curl"):
+            cmd = [
+                "curl",
+                "-L",
+                "--progress-bar",
+                "--retry",
+                "5",
+                "--retry-delay",
+                "10",
+                "--max-time",
+                "600",
+                "-o",
+                tmp_path,
+                url,
+            ]
+        else:
+            raise GWOSCTransientError(
+                "Neither wget nor curl is installed on this system"
+            )
+
         try:
-            os.remove(path)
-        except OSError:
-            pass
-        raise GWOSCTransientError(f"Downloaded file is corrupted: {path}")
+            subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError as exc:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            raise GWOSCTransientError(f"Download failed for {url}: {exc}") from exc
 
-    return path
+        if not os.path.exists(tmp_path):
+            raise GWOSCTransientError(
+                f"Download command did not create output file for {url}"
+            )
 
+        os.replace(tmp_path, path)
+
+        if not _validate_cached_hdf5(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+            raise GWOSCTransientError(f"Downloaded file is corrupted: {path}")
+
+        return path
+
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+        _release_file_lock(lock_path)
 
 def _load_segment_from_cache(ifo, ifo_cfg, t_center, cache_dir):
     t_start = t_center - 128

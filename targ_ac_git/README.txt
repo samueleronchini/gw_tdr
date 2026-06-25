@@ -1,5 +1,5 @@
-GW Targetet Detectability Range
-===============================
+TDR-GRB
+=======
 
 This repository contains a Python pipeline to estimate the Targeted Detectability Range (TDR) for compact-binary gravitational-wave signals associated with an external GRB trigger.
 
@@ -39,8 +39,8 @@ INSTALLATION
 
 Create a fresh conda environment:
 
-    conda create -n TDR python=3.11 pip
-    conda activate TDR
+    conda create -n TDR_grb python=3.11 pip
+    conda activate TDR_grb
 
 Clone the repository:
 
@@ -187,12 +187,12 @@ For NSBH systems, the waveform is:
 The NSBH calculations are performed for the SFHo and DD2 equations of state. The final public results_nsbh.json reports the EOS-averaged D90.
 
 
-SNR TYPE
+SNR STATISTIC
 =============
 
 The command-line option:
 
-    --snr-type
+    --snr-statistic
 
 accepts two values:
 
@@ -204,7 +204,7 @@ accepts two values:
 
 The default is:
 
-    --snr-type mf
+    --snr-statistic mf
 
 The SNR threshold used to define D90 is set with:
 
@@ -212,7 +212,7 @@ The SNR threshold used to define D90 is set with:
 
 The default value is:
 
-    --snr-threshold 9
+    --snr-threshold 8.5
 
 
 OUTPUT FILES
@@ -266,8 +266,8 @@ Use this when the GRB sky position is known.
         --t0 <trigger_time> \
         --ra <right_ascension_deg> \
         --dec <declination_deg> \
-        --snr-threshold 9 \
-        --snr-type mf
+        --snr-threshold 8.5 \
+        --snr-statistic mf
 
 Example:
 
@@ -277,8 +277,8 @@ Example:
         --t0 2020-03-26T12:24:47.903 \
         --ra 245.33 \
         --dec -21.08 \
-        --snr-threshold 9 \
-        --snr-type mf
+        --snr-threshold 8.5 \
+        --snr-statistic mf
 
 
 Example 2: using a sky map
@@ -291,8 +291,8 @@ Use this when a HEALPix localization file is available.
         --output-dir <output_directory> \
         --t0 <trigger_time> \
         --skymap-file <skymap_file.fit> \
-        --snr-threshold 9 \
-        --snr-type mf
+        --snr-threshold 8.5 \
+        --snr-statistic mf
 
 Example:
 
@@ -301,8 +301,8 @@ Example:
         --output-dir GRB_GIT \
         --t0 2020-03-26T12:24:47.903 \
         --skymap-file glg_healpix_all_bn200326517_v00.fit \
-        --snr-threshold 9 \
-        --snr-type mf
+        --snr-threshold 8.5 \
+        --snr-statistic mf
 
 
 Example 3: custom inclination interval
@@ -322,8 +322,8 @@ To run only a custom inclination range:
         --skymap-file glg_healpix_all_bn200326517_v00.fit \
         --iota-min 0 \
         --iota-max 30 \
-        --snr-threshold 9 \
-        --snr-type mf
+        --snr-threshold 8.5 \
+        --snr-statistic mf
 
 
 NOTES
