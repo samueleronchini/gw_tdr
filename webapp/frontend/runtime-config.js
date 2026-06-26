@@ -1,3 +1,3 @@
 window.TDR_WEB_CONFIG = {
-  publicApiBase: "https://reflection-generating-faced-investors.trycloudflare.com",
+  publicApiBase: "https://reverse-bargains-airfare-printing.trycloudflare.com",
 };
