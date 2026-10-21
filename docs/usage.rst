@@ -57,12 +57,14 @@ Command options
 - ``--snr-threshold``: detection threshold used for D90 (default: 9)
 - ``--snr-type``: ``mf`` (matched-filter-like) or ``opt`` (optimal)
 - ``--grb-name``: name for metadata and the combined plot (default: ``GRB``)
-- ``--t90``: optional metadata in seconds; does not set the scan end
 - ``--scan-start`` and ``--scan-end``: offsets from T0 in seconds (default: 0)
 - ``--scan-step``: scan step in seconds (default: 32)
 
 The inclination defaults are 0--45 degrees. The 0--90-degree prior is always
-saved alongside a custom prior. Scan bins are processed sequentially.
+saved alongside a custom prior in the JSON files. Each targeted-range PDF
+shows only the user's prior, with three solid curves for the mass configurations
+and the inclination bounds in the legend title. Scan bins are processed
+sequentially; the scan end is an explicit offset from T0, with no duration input.
 
 
 Output overview
@@ -92,7 +94,8 @@ Typical output tree:
 
 Each requested scan time gets its own directory. The combined plot uses the
 mean network antenna magnitude over the map's 90% credible region for its
-colors. This area average is metadata and does not enter the D90 calculation.
+colors. Its legend is above the D90 panel, replacing the GRB title.
+This area average is metadata and does not enter the D90 calculation.
 D90 retains full-map probability-weighted sky sampling.
 
 Python function

@@ -34,11 +34,23 @@ def test_python_api_returns_summary_and_applies_defaults(tmp_path, monkeypatch):
     assert [bin["offset_s"] for bin in summary["bins"]] == [-32, 0, 3.584]
     assert summary["user_prior"] == "0-45"
     assert summary["snr_threshold"] == 9
+    assert "t90" not in summary
     assert summary == json.loads((tmp_path / "scan_summary.json").read_text())
     assert np.allclose([row[0] for row in observed],
                        1266908331.806 + np.array([-32, 0, 3.584]))
     assert [prior["label"] for prior in observed[0][1]] == ["0-45", "0-90"]
     assert np.isclose(observed[0][3], np.pi / 4)
+
+
+def test_t90_is_no_longer_an_input(tmp_path):
+    with pytest.raises(SystemExit):
+        runner.build_parser().parse_args([
+            "--output-dir", str(tmp_path), "--t0", "1266908331.806",
+            "--ra", "0", "--dec", "0", "--t90", "3.584",
+        ])
+    with pytest.raises(TypeError, match="t90"):
+        run_grb(grb_name="GRBtest", t0=1266908331.806,
+                output_dir=tmp_path, ra=0, dec=0, t90=3.584)
 
 
 def test_existing_command_line_returns_success_without_grb_name(tmp_path, monkeypatch):

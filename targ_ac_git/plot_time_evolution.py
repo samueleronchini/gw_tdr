@@ -165,7 +165,6 @@ def plot_time_evolution(output_dir):
     ax_d90.set_ylabel(r"$D_{90}$ (Mpc)")
     ax_d90.grid(False)
     ax_det.grid(False)
-    ax_d90.set_title(summary["grb_name"], fontsize=14)
     if all_valid:
         ax_d90.set_ylim(0, max(value for value, _ in all_valid) * 1.12)
     else:
@@ -180,7 +179,8 @@ def plot_time_evolution(output_dir):
     if reference != 0:
         handles.append(Line2D([0], [0], color="gray", linestyle=DASHED, linewidth=1.5,
                                label=f"Max D90: T={reference:g} s"))
-    ax_d90.legend(handles=handles, loc="center left", frameon=True, fontsize=10,
+    ax_d90.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 1.02),
+                   ncol=len(handles), frameon=True, fontsize=10,
                    handler_map={Line2D: HandlerLine2D(numpoints=1)}, numpoints=1)
     prior = rf"${summary['iota_min_deg']:g}^\circ\leq\iota\leq{summary['iota_max_deg']:g}^\circ$"
     fig.text(0.12, 0.01, prior + f"; SNR threshold = {summary['snr_threshold']:g}", fontsize=9)

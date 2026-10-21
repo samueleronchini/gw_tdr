@@ -205,29 +205,16 @@ def _fraction_curve(final_snr_ref, distances, snr_threshold):
     return np.array([np.mean(detectable_distances > dist) for dist in distances])
 
 
-def _line_style_and_label(iota_ranges, prior_label, mass_label):
-    if len(iota_ranges) == 1:
-        return SOLID, mass_label
-    if prior_label == iota_ranges[0]["label"]:
-        return DASHED, None
-    return SOLID, mass_label
-
-
 def _add_tdr_legend(masses_list, iota_ranges):
     mass_handles = [
         Line2D([0], [0], color=MASS_COLORS[i % len(MASS_COLORS)], lw=2.0, linestyle=SOLID, label=f"m1={m1}, m2={m2}")
         for i, (m1, m2) in enumerate(masses_list)
     ]
 
-    iota_handles = []
-    for i, prior in enumerate(iota_ranges):
-        lo, hi = np.degrees([prior["iota_min"], prior["iota_max"]])
-        style = DASHED if len(iota_ranges) > 1 and i == 0 else SOLID
-        iota_handles.append(Line2D([0], [0], color="0.6", lw=2.0, linestyle=style,
-                                   label=rf"${lo:g}^\circ\leq\iota\leq{hi:g}^\circ$"))
-    handles = mass_handles + iota_handles
-
-    leg = pp.legend(handles=handles, fontsize=9, handlelength=3.0, borderpad=0.35, labelspacing=0.35, handletextpad=0.7,
+    prior = iota_ranges[0]
+    lo, hi = np.degrees([prior["iota_min"], prior["iota_max"]])
+    leg = pp.legend(handles=mass_handles, title=rf"${lo:g}^\circ\leq\iota\leq{hi:g}^\circ$",
+                    fontsize=9, title_fontsize=9, handlelength=3.0, borderpad=0.35, labelspacing=0.35, handletextpad=0.7,
                     handler_map={Line2D: HandlerLine2D(numpoints=1)}, numpoints=1)
     for line in leg.get_lines():
         line.set_linewidth(2.0)
@@ -277,7 +264,8 @@ def compute_range(ra, dec, online_ifos, chirp_masses, output_dir, iota_ranges, s
     Compute TDR values and range-fraction plots for BNS and NSBH systems.
 
     NSBH systems are computed for SFHo and DD2 internally, but the saved JSON and
-    the plot report the EOS-averaged value/curve.
+    the plot report the EOS-averaged value/curve. All priors are saved in JSON;
+    only the user-selected prior is plotted.
     """
     n_sample = 10000
     required_fraction = 0.9
@@ -377,12 +365,14 @@ def compute_range(ra, dec, online_ifos, chirp_masses, output_dir, iota_ranges, s
                         nsbh_plot_curves.setdefault((m1, m2, prior_label), {})[eos] = fraction_snr_gt_thr
                         continue
 
+                    if prior_label != iota_ranges[0]["label"]:
+                        continue
+
                     below_threshold = fraction_snr_gt_thr < required_fraction
                     if np.any(below_threshold):
                         median_dist.append(distances[np.where(below_threshold)[0][0]])
 
-                    line_style, label = _line_style_and_label(iota_ranges, prior_label, mass_label)
-                    pp.plot(distances, fraction_snr_gt_thr, linestyle=line_style, color=color, linewidth=2.0, label=label)
+                    pp.plot(distances, fraction_snr_gt_thr, linestyle=SOLID, color=color, linewidth=2.0, label=mass_label)
 
         if cbc_type == "nsbh":
             avg_results = {"nsbh": {}}
@@ -421,6 +411,9 @@ def compute_range(ra, dec, online_ifos, chirp_masses, output_dir, iota_ranges, s
                         "D90_Mpc": float(np.mean(d90_values)) if d90_values else None,
                     }
 
+                    if prior_label != iota_ranges[0]["label"]:
+                        continue
+
                     key = (m1, m2, prior_label)
                     if key not in nsbh_plot_curves:
                         logging.info(f"No NSBH plotting curves found for {mass_label}, prior={prior_label}")
@@ -435,8 +428,7 @@ def compute_range(ra, dec, online_ifos, chirp_masses, output_dir, iota_ranges, s
                     if np.any(below_threshold):
                         median_dist.append(distances[np.where(below_threshold)[0][0]])
 
-                    line_style, label = _line_style_and_label(iota_ranges, prior_label, mass_label)
-                    pp.plot(distances, avg_curve, linestyle=line_style, color=color, linewidth=2.0, label=label)
+                    pp.plot(distances, avg_curve, linestyle=SOLID, color=color, linewidth=2.0, label=mass_label)
 
                 avg_results["nsbh"][mass_label]["online_ifos"] = sorted(set(all_ifos))
 

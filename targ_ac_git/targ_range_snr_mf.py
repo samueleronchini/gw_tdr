@@ -375,7 +375,6 @@ def build_parser():
     parser = argparse.ArgumentParser(description="Compute targeted detectability ranges for a single GRB trigger.")
 
     parser.add_argument("--grb-name", "--name", dest="grb_name", default="GRB", help="GRB name, e.g. GRB200228291. Default: GRB for existing command-line callers.")
-    parser.add_argument("--t90", type=float, default=None, help="Optional T90 metadata in seconds; scan end is independent.")
     parser.add_argument("--scan-start", type=float, default=0.0, help="Scan start relative to T0, in seconds.")
     parser.add_argument("--scan-end", type=float, default=0.0, help="Scan end relative to T0, in seconds.")
     parser.add_argument("--scan-step", "--step-size", dest="scan_step", type=float, default=32.0, help="Scan step in seconds.")
@@ -426,8 +425,6 @@ def targ_range(args=None):
     map_iota_min = np.radians(float(args.iota_min))
     map_iota_max = np.radians(float(args.iota_max))
     offsets = _build_offsets(args.scan_end, args.scan_start, args.scan_step)
-    if args.t90 is not None and (not np.isfinite(args.t90) or args.t90 < 0):
-        raise ValueError("--t90 must be finite and nonnegative")
 
     start_time = time.time()
 
@@ -463,7 +460,7 @@ def targ_range(args=None):
     print(f"USING GWOSC CACHE DIR: {cache_dir}", flush=True)
 
     summary = {
-        "grb_name": args.grb_name, "t0": str(args.t0), "t90": args.t90,
+        "grb_name": args.grb_name, "t0": str(args.t0),
         "scan_start": args.scan_start, "scan_end": args.scan_end, "scan_step": args.scan_step,
         "snr_threshold": snr_threshold, "snr_type": snr_type,
         "user_prior": iota_ranges[0]["label"],
@@ -503,13 +500,13 @@ def targ_range(args=None):
 
 
 def run_grb(*, grb_name, t0, output_dir, ra=None, dec=None, skymap_file=None,
-            t90=None, scan_start=0.0, scan_end=0.0, scan_step=32.0,
+            scan_start=0.0, scan_end=0.0, scan_step=32.0,
             iota_min=0.0, iota_max=45.0, snr_threshold=9.0, snr_type="mf",
             cache_dir=None):
     """Analyze one GRB and return the scan summary.
 
     ``t0`` is an ISO UTC time or GPS seconds. Sky coordinates and inclination
-    limits are in degrees; scan offsets and T90 are in seconds. Localization
+    limits are in degrees; scan offsets are in seconds. Localization
     and output paths can be strings or pathlib.Path objects. The user prior
     and 0--90-degree prior are saved in the result JSON files. The returned
     dictionary contains the settings, per-bin status, IFOs and antenna metadata;
@@ -522,7 +519,6 @@ def run_grb(*, grb_name, t0, output_dir, ra=None, dec=None, skymap_file=None,
         "ra": ra,
         "dec": dec,
         "skymap_file": None if skymap_file is None else os.fspath(skymap_file),
-        "t90": t90,
         "scan_start": scan_start,
         "scan_end": scan_end,
         "scan_step": scan_step,

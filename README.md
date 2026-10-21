@@ -23,7 +23,7 @@ For a given trigger time, sky position or sky map, and inclination-angle prior, 
 8. estimates the targeted detectability range, D90;
 9. produces TDR plots, sky maps, PSD plots, and JSON result files.
 
-The default inclination treatment compares two priors:
+The default calculation saves results for two inclination priors:
 
     0 deg < iota < 45 deg
 
@@ -31,7 +31,7 @@ and
 
     0 deg < iota < 90 deg
 
-Use --iota-min and --iota-max for a custom inclination interval. The 0--90-degree prior is always included in the targeted-range PDFs and JSON files. Inclination samples are uniform in cos(iota).
+Use --iota-min and --iota-max for a custom inclination interval. The JSON files always include the 0--90-degree prior alongside the user's prior. Each targeted-range PDF shows only the user's prior, with three solid curves for the three mass configurations. Inclination samples are uniform in cos(iota).
 
 
 INSTALLATION
@@ -245,7 +245,7 @@ A typical output directory has the structure:
         results_nsbh.json
 ```
 
-Each requested scan time has its own bin directory. Detector-specific files exist for the detectors used in that bin. The range map uses the user's inclination bounds and retains all three distance contours. Both targeted-range PDFs and result JSON files include the user's prior and the 0--90-degree prior. The evolution plot shows BNS (1.4, 1.4) and NSBH (10, 1.4) D90 for the user prior with an IFO subplot.
+Each requested scan time has its own bin directory. Detector-specific files exist for the detectors used in that bin. The range map uses the user's inclination bounds and retains all three distance contours. Each targeted-range PDF shows three solid mass curves for the user's prior, with the inclination bounds in the legend title. The result JSON files include both the user's prior and the 0--90-degree prior. The evolution plot shows BNS (1.4, 1.4) and NSBH (10, 1.4) D90 for the user prior with an IFO subplot. Its legend is above the D90 panel, in place of the GRB title.
 
 The file:
 
@@ -318,7 +318,7 @@ If --iota-min and --iota-max are omitted, the code evaluates both:
     0 deg < iota < 45 deg
     0 deg < iota < 90 deg
 
-To compare a custom inclination range with the 0--90-degree prior:
+To plot a custom inclination range and save both priors in JSON:
 
     python -m targ_ac_git.targ_range_snr_mf \
         --output-dir GRB_GIT \
@@ -353,7 +353,6 @@ summary = run_grb(
     output_dir="GRB_runs/GRB200228291",
     ra=333.89292,
     dec=-42.944167,
-    t90=3.584,
     skymap_file="/absolute/path/to/localization.fit",
     scan_start=-1000,
     scan_end=3.584,
@@ -382,7 +381,6 @@ tdr \
     --t0 2020-02-28T06:58:33.806 \
     --ra 333.89292 \
     --dec=-42.944167 \
-    --t90 3.584 \
     --skymap-file /absolute/path/to/localization.fit \
     --scan-start=-1000 \
     --scan-end 3.584 \
@@ -392,9 +390,9 @@ tdr \
     --snr-threshold 9
 ```
 
-The localization FITS file must exist locally. Paths are resolved relative to the current working directory unless absolute paths are provided. `--grb-name` defaults to `GRB` for existing command-line callers such as the web app; the Python function requires a name. Existing command-line flags and the `tdr` entry point remain available. Result files now live in scan-bin subdirectories, including for T0-only runs.
+The localization FITS file must exist locally. Paths are resolved relative to the current working directory unless absolute paths are provided. `--grb-name` defaults to `GRB` for existing command-line callers such as the web app; the Python function requires a name. The installed command remains `tdr`. Result files live in scan-bin subdirectories, including for T0-only runs.
 
-The scan includes its exact endpoints and the T0-anchored step grid within those limits. T0 is included when it lies within the interval. `--t90` is metadata and does not set the scan end. No D90 input is needed.
+The scan includes its exact endpoints and the T0-anchored step grid within those limits. T0 is included when it lies within the interval. Set `--scan-end` explicitly in seconds relative to T0; no duration or D90 input is needed.
 
 ANTENNA METADATA
 ================
